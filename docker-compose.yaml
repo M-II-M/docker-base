@@ -70,3 +70,17 @@ services:
     entrypoint: [ "php", "/var/www/laravel/artisan", "schedule:work"]
     restart: unless-stopped
 
+
+  elasticsearch:
+    env_file:
+      - env/elastic.env
+    extends:
+      file: docker-compose.elastic.yaml
+      service: elasticsearch
+
+  kibana:
+    env_file:
+      - env/elastic.env
+    extends:
+      file: docker-compose.elastic.yaml
+      service: kibana

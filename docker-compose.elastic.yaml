@@ -1,0 +1,57 @@
+services:
+  elasticsearch:
+    image: elasticsearch:7.17.24
+    labels:
+      co.elastic.logs/module: elasticsearch
+    volumes:
+      - ./esdata01:/usr/share/elasticsearch/data
+    env_file:
+      - env/elastic.env
+    ports:
+      - 9200:9200
+    environment:
+      - node.name=es01
+      - cluster.name=$${CLUSTER_NAME}
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=changeme
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=$${LICENSE}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    restart: always
+    container_name: elasticsearch
+
+  kibana:
+    depends_on:
+      - elasticsearch
+    image: kibana:7.17.24
+    labels:
+      co.elastic.logs/module: kibana
+    volumes:
+      - ./kibana_data:/usr/share/kibana/data
+    env_file:
+      - env/elastic.env
+    ports:
+      - 5601:5601
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=http://141.8.192.113:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=changeme
+      - XPACK_SECURITY_ENCRYPTIONKEY=c34d38b3a14956121ff2170e5030b471551370178f43e5626eec58b04a30fae2
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=c34d38b3a14956121ff2170e5030b471551370178f43e5626eec58b04a30fae2
+      - XPACK_REPORTING_ENCRYPTIONKEY=c34d38b3a14956121ff2170e5030b471551370178f43e5626eec58b04a30fae2
+    container_name: kibana
+    restart: always
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
